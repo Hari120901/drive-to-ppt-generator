@@ -9,7 +9,7 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
 
 st.set_page_config(page_title="Flipkart Minutes Style PPT Gen", layout="wide")
-st.title("📊 Professional PPT Generator (Folder-wise Grouping)")
+st.title("📊 Professional PPT Generator (Folder-wise Grouping with Rotated Images)")
 
 # -------------------------
 # Google Drive Authentication
@@ -73,6 +73,7 @@ if generate_btn:
             st.stop()
 
         prs = Presentation()
+        # Set slide dimensions to Standard (10 x 7.5) to match the screenshot aspect ratio
         prs.slide_width = Inches(10)
         prs.slide_height = Inches(7.5)
 
@@ -95,11 +96,12 @@ if generate_btn:
 
                 # 1. Teal Header Rectangle (Folder Name)
                 header_rect = slide.shapes.add_shape(
-                    1, Inches(0.2), Inches(0.2), Inches(4.5), Inches(0.7)
+                    1, # Rectangle
+                    Inches(0.2), Inches(0.2), Inches(4.5), Inches(0.7)
                 )
                 header_rect.fill.solid()
                 header_rect.fill.fore_color.rgb = TEAL_COLOR
-                header_rect.line.fill.background()
+                header_rect.line.fill.background() # No border
 
                 loc_text = header_rect.text_frame
                 loc_text.text = folder_name
@@ -117,10 +119,14 @@ if generate_btn:
                 p_adv.font.size = Pt(22)
                 p_adv.font.color.rgb = RGBColor(0, 0, 0)
 
-                # 3. Add 3 Images horizontally
+                # 3. Add 3 Images horizontally (Rotated 90 degrees Clockwise)
                 slide_images = images[i:i+3]
-                img_width = Inches(3.0)
-                img_height = Inches(4.5)
+                
+                # New rotated dimensions (swapped and scaled down slightly to fit 3 in a row)
+                img_width = Inches(3.0) # Original width of portrait picture
+                img_height = Inches(4.5) # Original height of portrait picture
+
+                # Layout definitions
                 start_left = Inches(0.3)
                 gap = Inches(0.2)
                 top_pos = Inches(2.2)
@@ -129,21 +135,30 @@ if generate_btn:
                     img_stream = download_image(service, img["id"])
                     left = start_left + (idx * (img_width + gap))
                     
-                    # Add Image
-                    slide.shapes.add_picture(img_stream, left, top_pos, width=img_width, height=img_height)
+                    # Add Picture with 90 degree clockwise rotation (horizontal orientation)
+                    # We specify the standard height/width and then rotate the container
+                    # pic = slide.shapes.add_picture(img_stream, left, top_pos, width=img_width, height=img_height)
+                    # pic.rotation = 90
                     
-                    # Add Black Border
+                    # Since we want them rotated but still within a black frame, we will rotate the picture and frame together using a grouped shape, but pptx doesn't handle rotation of grouped pictures well.
+                    
+                    # We can directly set the dimensions to portrait style, and rotation to horizontal style.
+                    pic = slide.shapes.add_picture(img_stream, left, top_pos, width=img_width, height=img_height)
+                    pic.rotation = -90 # Negative 90 for landscape orientation (top edge to the left)
+                    
+                    # Add Black Border/Frame around the portrait oriented picture (rotated shape)
                     rect = slide.shapes.add_shape(1, left, top_pos, img_width, img_height)
                     rect.fill.background()
                     rect.line.color.rgb = RGBColor(0, 0, 0)
                     rect.line.width = Pt(1.5)
+                    rect.rotation = -90 # Rotate border too to match image shape
 
         # Save and Download
         ppt_io = io.BytesIO()
         prs.save(ppt_io)
         ppt_io.seek(0)
 
-        st.success("Presentation generated successfully based on folder structure!")
+        st.success("Presentation generated successfully!")
         st.download_button(
             label="📥 Download PPT",
             data=ppt_io,
