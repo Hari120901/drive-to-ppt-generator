@@ -9,7 +9,7 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
 
 st.set_page_config(page_title="Flipkart Minutes Style PPT Gen", layout="wide")
-st.title("📊 Professional PPT Generator")
+st.title("📊 Professional PPT Generator (Folder-wise Grouping)")
 
 # -------------------------
 # Google Drive Authentication
@@ -28,11 +28,13 @@ def extract_folder_id(link):
     return link.split("folders/")[1].split("?")[0]
 
 def get_subfolders(service, parent_id):
+    """Fetch all subfolders within the provided link"""
     query = f"'{parent_id}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false"
     results = service.files().list(q=query, fields="files(id, name)").execute()
     return results.get("files", [])
 
 def get_images_in_folder(service, folder_id):
+    """Fetch images only from a specific folder"""
     query = f"'{folder_id}' in parents and mimeType contains 'image/' and trashed=false"
     results = service.files().list(q=query, fields="files(id, name)").execute()
     return results.get("files", [])
@@ -48,43 +50,10 @@ def download_image(service, file_id):
     return fh
 
 # -------------------------
-# PPT Generation Logic
-# -------------------------
-def create_title_slide(prs, campaign_name):
-    """Creates the first page based on the 'Proof of Play' screenshot"""
-    slide = prs.slides.add_slide(prs.slide_layouts[6])
-    
-    # Placeholder for the Teal graphic bar
-    teal_bar = slide.shapes.add_shape(1, 0, Inches(2.2), Inches(3), Inches(1.5))
-    teal_bar.fill.solid()
-    teal_bar.fill.fore_color.rgb = RGBColor(0, 140, 170)
-    teal_bar.line.fill.background()
-
-    # Campaign Name (Placed above Proof of Play)
-    camp_box = slide.shapes.add_textbox(Inches(0.2), Inches(5.0), Inches(5), Inches(0.5))
-    p_camp = camp_box.text_frame.paragraphs[0]
-    p_camp.text = campaign_name
-    p_camp.font.size = Pt(32)
-    p_camp.font.bold = True
-    p_camp.font.color.rgb = RGBColor(0, 50, 100) # Dark Blue
-
-    # "Proof of Play Pictures" Text
-    pop_box = slide.shapes.add_textbox(Inches(0.2), Inches(5.5), Inches(5), Inches(0.5))
-    p_pop = pop_box.text_frame.paragraphs[0]
-    p_pop.text = "Proof of Play Pictures"
-    p_pop.font.size = Pt(28)
-    p_pop.font.bold = True
-    p_pop.font.color.rgb = RGBColor(0, 50, 100)
-
-    # Note: For the diagonal image collage, you would typically upload the 
-    # specific background image to your assets and use:
-    # slide.shapes.add_picture('collage_bg.png', Inches(4), 0, width=Inches(6))
-
-# -------------------------
 # User Inputs
 # -------------------------
 campaign_input = st.text_input("📌 Campaign Name")
-drive_link = st.text_input("🔗 Google Drive Folder Link")
+drive_link = st.text_input("🔗 Google Drive Folder Link (containing subfolders)")
 generate_btn = st.button("🚀 Generate Presentation")
 
 if generate_btn:
@@ -95,57 +64,92 @@ if generate_btn:
     try:
         service = authenticate_drive()
         main_folder_id = extract_folder_id(drive_link)
+        
+        # Get all subfolders (e.g., Omaxe The Palace, etc.)
         subfolders = get_subfolders(service, main_folder_id)
+        
+        if not subfolders:
+            st.error("No subfolders found in the provided link.")
+            st.stop()
 
         prs = Presentation()
         prs.slide_width = Inches(10)
         prs.slide_height = Inches(7.5)
 
-        # 1. ADD THE FIRST PAGE
-        create_title_slide(prs, campaign_input)
-
-        # 2. ADD CONTENT PAGES
+        # UI Constants
         TEAL_COLOR = RGBColor(0, 140, 170) 
 
         for folder in subfolders:
             folder_name = folder['name']
-            images = get_images_in_folder(service, folder['id'])
+            folder_id = folder['id']
             
-            if not images: continue
+            # Fetch images for THIS specific folder
+            images = get_images_in_folder(service, folder_id)
+            
+            if not images:
+                continue # Skip folders with no images
 
+            # Split images into groups of 3 (for the 3-column layout)
             for i in range(0, len(images), 3):
-                slide = prs.slides.add_slide(prs.slide_layouts[6])
+                slide = prs.slides.add_slide(prs.slide_layouts[6]) # Blank Slide
 
-                # Teal Header (Folder Name)
-                header_rect = slide.shapes.add_shape(1, Inches(0.2), Inches(0.2), Inches(4.5), Inches(0.7))
+                # 1. Teal Header Rectangle (Folder Name)
+                header_rect = slide.shapes.add_shape(
+                    1, Inches(0.2), Inches(0.2), Inches(4.5), Inches(0.7)
+                )
                 header_rect.fill.solid()
                 header_rect.fill.fore_color.rgb = TEAL_COLOR
                 header_rect.line.fill.background()
-                
+
                 loc_text = header_rect.text_frame
                 loc_text.text = folder_name
-                loc_text.paragraphs[0].font.size = Pt(18)
-                loc_text.paragraphs[0].font.color.rgb = RGBColor(255, 255, 255)
+                p_loc = loc_text.paragraphs[0]
+                p_loc.font.bold = True
+                p_loc.font.size = Pt(18)
+                p_loc.font.color.rgb = RGBColor(255, 255, 255)
+                p_loc.alignment = PP_ALIGN.CENTER
 
-                # Campaign Name Label
+                # 2. Campaign Name Label
                 adv_box = slide.shapes.add_textbox(Inches(0.5), Inches(1.1), Inches(6), Inches(0.5))
-                adv_box.text_frame.text = f"Campaign Name: {campaign_input}"
-                adv_box.text_frame.paragraphs[0].font.size = Pt(22)
-                adv_box.text_frame.paragraphs[0].font.bold = True
+                p_adv = adv_box.text_frame.paragraphs[0]
+                p_adv.text = f"Campaign Name: {campaign_input}"
+                p_adv.font.bold = True
+                p_adv.font.size = Pt(22)
+                p_adv.font.color.rgb = RGBColor(0, 0, 0)
 
-                # Images
+                # 3. Add 3 Images horizontally
                 slide_images = images[i:i+3]
+                img_width = Inches(3.0)
+                img_height = Inches(4.5)
+                start_left = Inches(0.3)
+                gap = Inches(0.2)
+                top_pos = Inches(2.2)
+
                 for idx, img in enumerate(slide_images):
                     img_stream = download_image(service, img["id"])
-                    # Standard portrait placement; rotate if required by your previous request
-                    pic = slide.shapes.add_picture(img_stream, Inches(0.3 + (idx * 3.2)), Inches(2.2), width=Inches(3.0))
+                    left = start_left + (idx * (img_width + gap))
+                    
+                    # Add Image
+                    slide.shapes.add_picture(img_stream, left, top_pos, width=img_width, height=img_height)
+                    
+                    # Add Black Border
+                    rect = slide.shapes.add_shape(1, left, top_pos, img_width, img_height)
+                    rect.fill.background()
+                    rect.line.color.rgb = RGBColor(0, 0, 0)
+                    rect.line.width = Pt(1.5)
 
+        # Save and Download
         ppt_io = io.BytesIO()
         prs.save(ppt_io)
         ppt_io.seek(0)
 
-        st.success("PPT Generated with Title Page!")
-        st.download_button(label="📥 Download PPT", data=ppt_io, file_name="Campaign_Report.pptx")
+        st.success("Presentation generated successfully based on folder structure!")
+        st.download_button(
+            label="📥 Download PPT",
+            data=ppt_io,
+            file_name=f"{campaign_input}_Report.pptx",
+            mime="application/vnd.openxmlformats-officedocument.presentationml.presentation"
+        )
 
     except Exception as e:
         st.error(f"Error: {e}")
