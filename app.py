@@ -3,19 +3,13 @@ import io
 from pptx import Presentation
 from pptx.util import Inches, Pt
 from pptx.dml.color import RGBColor
+from pptx.enum.text import PP_ALIGN
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
 
-st.set_page_config(page_title="Drive to PPT Generator", layout="centered")
-st.title("📊 Professional PPT Generator (Recursive Subfolders)")
-
-# -------------------------
-# User Inputs
-# -------------------------
-campaign_name = st.text_input("📌 Campaign Name")
-drive_link = st.text_input("🔗 Google Drive Folder Link")
-generate_btn = st.button("🚀 Generate Presentation")
+st.set_page_config(page_title="Flipkart Minutes Style PPT Gen", layout="centered")
+st.title("📊 Professional PPT Generator")
 
 # -------------------------
 # Google Drive Authentication
@@ -33,23 +27,21 @@ def extract_folder_id(link):
         st.stop()
     return link.split("folders/")[1].split("?")[0]
 
-def get_images_recursive(service, folder_id):
-    """Recursively fetch all images from folder and subfolders"""
-    all_images = []
+def get_folder_metadata(service, folder_id):
+    """Fetch the actual name of the folder from Drive"""
+    folder = service.files().get(fileId=folder_id, fields="name").execute()
+    return folder.get("name", "Unknown Location")
 
-    # Get images in current folder
+def get_images_recursive(service, folder_id):
+    all_images = []
     query = f"'{folder_id}' in parents and mimeType contains 'image/'"
     results = service.files().list(q=query, pageSize=1000).execute()
-    images = results.get("files", [])
-    all_images.extend(images)
+    all_images.extend(results.get("files", []))
 
-    # Get subfolders
     folder_query = f"'{folder_id}' in parents and mimeType='application/vnd.google-apps.folder'"
     folders = service.files().list(q=folder_query, pageSize=1000).execute().get("files", [])
-
     for f in folders:
         all_images.extend(get_images_recursive(service, f["id"]))
-
     return all_images
 
 def download_image(service, file_id):
@@ -63,88 +55,98 @@ def download_image(service, file_id):
     return fh
 
 # -------------------------
-# Generate PPT Logic
+# User Inputs
 # -------------------------
-if generate_btn:
+campaign_name = st.text_input("📌 Campaign Name (e.g., Flipkart Minutes)")
+drive_link = st.text_input("🔗 Google Drive Folder Link")
+generate_btn = st.button("🚀 Generate Presentation")
 
-    if not campaign_name:
-        st.warning("Please enter Campaign Name")
-        st.stop()
-    if not drive_link:
-        st.warning("Please enter Drive Folder Link")
+if generate_btn:
+    if not campaign_name or not drive_link:
+        st.warning("Please fill in all fields")
         st.stop()
 
     try:
         service = authenticate_drive()
         folder_id = extract_folder_id(drive_link)
+        location_name = get_folder_metadata(service, folder_id)
         images = get_images_recursive(service, folder_id)
 
         if not images:
-            st.error("No images found in the folder or its subfolders.")
+            st.error("No images found.")
             st.stop()
 
         prs = Presentation()
+        # Set slide dimensions to Widescreen (13.33 x 7.5) or Standard (10 x 7.5)
+        # Using standard 10x7.5 based on your reference image aspect ratio
+        prs.slide_width = Inches(10)
+        prs.slide_height = Inches(7.5)
 
-        # Title slide
-        title_slide_layout = prs.slide_layouts[0]
-        slide = prs.slides.add_slide(title_slide_layout)
-        slide.shapes.title.text = campaign_name
-        slide.placeholders[1].text = "Auto Generated Presentation"
+        # Layout constants
+        TEAL_COLOR = RGBColor(0, 140, 170) 
+        
+        for i in range(0, len(images), 3):
+            slide = prs.slides.add_slide(prs.slide_layouts[6]) # Blank layout
 
-        # Slide settings
-        img_per_slide = 4
-        col_positions = [Inches(0.5), Inches(5)]  # 2 columns
-        row_positions = [Inches(1.5), Inches(4)]  # 2 rows
-        width = Inches(4.0)
-        height = Inches(2.5)
+            # 1. Create Teal Header Bar
+            header_rect = slide.shapes.add_shape(
+                1, # Rectangle
+                Inches(0.2), Inches(0.2), Inches(5), Inches(0.8)
+            )
+            header_rect.fill.solid()
+            header_rect.fill.fore_color.rgb = TEAL_COLOR
+            header_rect.line.fill.background() # No border
 
-        # Background color
-        bg_color = RGBColor(230, 230, 250)  # light lavender
+            # 2. Add Location Text (Folder Name) inside Teal Bar
+            loc_text = header_rect.text_frame
+            loc_text.text = location_name
+            p_loc = loc_text.paragraphs[0]
+            p_loc.font.bold = True
+            p_loc.font.size = Pt(20)
+            p_loc.font.color.rgb = RGBColor(255, 255, 255)
+            p_loc.alignment = PP_ALIGN.CENTER
 
-        # Generate slides
-        for i in range(0, len(images), img_per_slide):
-            slide_layout = prs.slide_layouts[6]  # blank slide
-            slide = prs.slides.add_slide(slide_layout)
+            # 3. Add Advertiser Label (Campaign Name)
+            adv_box = slide.shapes.add_textbox(Inches(0.5), Inches(1.2), Inches(6), Inches(0.5))
+            p_adv = adv_box.text_frame.paragraphs[0]
+            p_adv.text = f"Advertiser: {campaign_name}"
+            p_adv.font.bold = True
+            p_adv.font.size = Pt(24)
+            p_adv.font.color.rgb = RGBColor(0, 0, 0)
 
-            # Set background color
-            background = slide.background
-            fill = background.fill
-            fill.solid()
-            fill.fore_color.rgb = bg_color
-
-            slide_images = images[i:i+img_per_slide]
-            footer_names = []
+            # 4. Place 3 Images Side-by-Side
+            slide_images = images[i:i+3]
+            img_width = Inches(3.0)
+            img_height = Inches(4.5) # Tall portrait style
+            start_left = Inches(0.3)
+            gap = Inches(0.2)
+            top_pos = Inches(2.2)
 
             for idx, img in enumerate(slide_images):
-                image_stream = download_image(service, img["id"])
-                col = idx % 2
-                row = idx // 2
-                left = col_positions[col]
-                top = row_positions[row]
-                slide.shapes.add_picture(image_stream, left, top, width=width, height=height)
-                footer_names.append(img["name"])
+                img_stream = download_image(service, img["id"])
+                left = start_left + (idx * (img_width + gap))
+                
+                # Add a black border/frame effect around image
+                slide.shapes.add_picture(img_stream, left, top_pos, width=img_width, height=img_height)
+                
+                # Optional: Thin border around the image
+                rect = slide.shapes.add_shape(1, left, top_pos, img_width, img_height)
+                rect.fill.background()
+                rect.line.color.rgb = RGBColor(0, 0, 0)
+                rect.line.width = Pt(1.5)
 
-            # Footer text with all image names on this slide
-            footer_text = " | ".join(footer_names)
-            txBox = slide.shapes.add_textbox(Inches(0.5), Inches(7.7), Inches(9), Inches(0.5))
-            tf = txBox.text_frame
-            p = tf.add_paragraph()
-            p.text = footer_text
-            p.font.size = Pt(12)
-            p.font.color.rgb = RGBColor(50, 50, 50)
-
-        # Save PPT to memory
+        # Save and Download
         ppt_io = io.BytesIO()
         prs.save(ppt_io)
         ppt_io.seek(0)
 
-        st.success("Professional Presentation Generated Successfully!")
+        st.success(f"Generated slides for {location_name}!")
         st.download_button(
             label="📥 Download PPT",
             data=ppt_io,
-            file_name=f"{campaign_name}.pptx",
+            file_name=f"{location_name}_Report.pptx",
             mime="application/vnd.openxmlformats-officedocument.presentationml.presentation"
         )
 
     except Exception as e:
-        st.error(f"Error: {e}")
+        st.error(f"Something went wrong: {e}")
