@@ -9,7 +9,7 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
 
 st.set_page_config(page_title="Flipkart Minutes Style PPT Gen", layout="wide")
-st.title("📊 Professional PPT Generator (Folder-wise Grouping)")
+st.title("📊 Poster Frames POP PPT Generator ")
 
 # -------------------------
 # Google Drive Authentication
