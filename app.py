@@ -8,7 +8,7 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
 
 st.set_page_config(page_title="Drive to PPT Generator", layout="centered")
-st.title("📊 Professional PPT Generator with Grid Layout")
+st.title("📊 Professional PPT Generator (Recursive Subfolders)")
 
 # -------------------------
 # User Inputs
@@ -33,10 +33,24 @@ def extract_folder_id(link):
         st.stop()
     return link.split("folders/")[1].split("?")[0]
 
-def get_images(service, folder_id):
+def get_images_recursive(service, folder_id):
+    """Recursively fetch all images from folder and subfolders"""
+    all_images = []
+
+    # Get images in current folder
     query = f"'{folder_id}' in parents and mimeType contains 'image/'"
     results = service.files().list(q=query, pageSize=1000).execute()
-    return results.get("files", [])
+    images = results.get("files", [])
+    all_images.extend(images)
+
+    # Get subfolders
+    folder_query = f"'{folder_id}' in parents and mimeType='application/vnd.google-apps.folder'"
+    folders = service.files().list(q=folder_query, pageSize=1000).execute().get("files", [])
+
+    for f in folders:
+        all_images.extend(get_images_recursive(service, f["id"]))
+
+    return all_images
 
 def download_image(service, file_id):
     request = service.files().get_media(fileId=file_id)
@@ -63,17 +77,17 @@ if generate_btn:
     try:
         service = authenticate_drive()
         folder_id = extract_folder_id(drive_link)
-        images = get_images(service, folder_id)
+        images = get_images_recursive(service, folder_id)
 
         if not images:
-            st.error("No images found in the folder.")
+            st.error("No images found in the folder or its subfolders.")
             st.stop()
 
         prs = Presentation()
 
         # Title slide
-        slide_layout = prs.slide_layouts[0]
-        slide = prs.slides.add_slide(slide_layout)
+        title_slide_layout = prs.slide_layouts[0]
+        slide = prs.slides.add_slide(title_slide_layout)
         slide.shapes.title.text = campaign_name
         slide.placeholders[1].text = "Auto Generated Presentation"
 
@@ -87,6 +101,7 @@ if generate_btn:
         # Background color
         bg_color = RGBColor(230, 230, 250)  # light lavender
 
+        # Generate slides
         for i in range(0, len(images), img_per_slide):
             slide_layout = prs.slide_layouts[6]  # blank slide
             slide = prs.slides.add_slide(slide_layout)
@@ -97,9 +112,9 @@ if generate_btn:
             fill.solid()
             fill.fore_color.rgb = bg_color
 
-            # Images for this slide
             slide_images = images[i:i+img_per_slide]
             footer_names = []
+
             for idx, img in enumerate(slide_images):
                 image_stream = download_image(service, img["id"])
                 col = idx % 2
@@ -109,7 +124,7 @@ if generate_btn:
                 slide.shapes.add_picture(image_stream, left, top, width=width, height=height)
                 footer_names.append(img["name"])
 
-            # Footer with all image names
+            # Footer text with all image names on this slide
             footer_text = " | ".join(footer_names)
             txBox = slide.shapes.add_textbox(Inches(0.5), Inches(7.7), Inches(9), Inches(0.5))
             tf = txBox.text_frame
