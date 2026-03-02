@@ -83,7 +83,7 @@ if generate_btn:
         # -------------------------
         visual_width = Inches(3)
         gap = Inches(0.3)
-        start_left = Inches(0.5)
+        start_left = Inches(0.4)
         intended_top = Inches(2.3)
 
         left_positions = [
