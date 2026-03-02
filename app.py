@@ -86,14 +86,34 @@ if generate_btn:
 
         TEAL_COLOR = RGBColor(0, 140, 170)
 
+        # -------------------------
+        # Fixed Image Layout Settings
+        # -------------------------
+        image_width = Inches(2.7)
+        top_position = Inches(2.3)
+        gap = Inches(0.4)
+        left_start = Inches(0.6)
+
+        left_positions = [
+            left_start,
+            left_start + image_width + gap,
+            left_start + (image_width + gap) * 2
+        ]
+
+        # -------------------------
+        # Loop Through Folders
+        # -------------------------
         for folder in subfolders:
+
             folder_name = folder["name"]
             folder_id = folder["id"]
+
             images = get_images_in_folder(service, folder_id)
 
             if not images:
                 continue
 
+            # Take max 3 images per slide
             for i in range(0, len(images), 3):
 
                 slide = prs.slides.add_slide(prs.slide_layouts[6])
@@ -102,59 +122,59 @@ if generate_btn:
                 # Header
                 # -------------------------
                 header_rect = slide.shapes.add_shape(
-                    1, Inches(0.2), Inches(0.2), Inches(4.5), Inches(0.7)
+                    1,
+                    Inches(0.2),
+                    Inches(0.2),
+                    Inches(4.5),
+                    Inches(0.7),
                 )
+
                 header_rect.fill.solid()
                 header_rect.fill.fore_color.rgb = TEAL_COLOR
                 header_rect.line.fill.background()
 
-                loc_text = header_rect.text_frame
-                loc_text.text = folder_name
-                p_loc = loc_text.paragraphs[0]
-                p_loc.font.bold = True
-                p_loc.font.size = Pt(18)
-                p_loc.font.color.rgb = RGBColor(255, 255, 255)
-                p_loc.alignment = PP_ALIGN.CENTER
+                header_tf = header_rect.text_frame
+                header_tf.text = folder_name
+                p = header_tf.paragraphs[0]
+                p.font.bold = True
+                p.font.size = Pt(18)
+                p.font.color.rgb = RGBColor(255, 255, 255)
+                p.alignment = PP_ALIGN.CENTER
 
                 # -------------------------
                 # Campaign Name
                 # -------------------------
-                adv_box = slide.shapes.add_textbox(
-                    Inches(0.5), Inches(1.1), Inches(6), Inches(0.5)
+                campaign_box = slide.shapes.add_textbox(
+                    Inches(0.5),
+                    Inches(1.1),
+                    Inches(6),
+                    Inches(0.5),
                 )
-                p_adv = adv_box.text_frame.paragraphs[0]
-                p_adv.text = f"Campaign Name: {campaign_input}"
-                p_adv.font.bold = True
-                p_adv.font.size = Pt(22)
+
+                campaign_tf = campaign_box.text_frame
+                campaign_tf.text = f"Campaign Name: {campaign_input}"
+                cp = campaign_tf.paragraphs[0]
+                cp.font.bold = True
+                cp.font.size = Pt(22)
 
                 # -------------------------
-                # Image Layout (NO ROTATION)
+                # Add Images (Fixed Size Always)
                 # -------------------------
                 slide_images = images[i:i + 3]
-
-                left_margin = Inches(0.5)
-                right_margin = Inches(0.5)
-                gap = Inches(0.3)
-                available_width = prs.slide_width - left_margin - right_margin
-                num_images = len(slide_images)
-
-                image_width = (available_width - gap * (num_images - 1)) / num_images
-                top_pos = Inches(2.2)
 
                 for idx, img in enumerate(slide_images):
 
                     img_stream = download_image(service, img["id"])
-                    left = left_margin + idx * (image_width + gap)
 
                     slide.shapes.add_picture(
                         img_stream,
-                        left,
-                        top_pos,
+                        left_positions[idx],
+                        top_position,
                         width=image_width
                     )
 
         # -------------------------
-        # Save PPT
+        # Save Presentation
         # -------------------------
         ppt_io = io.BytesIO()
         prs.save(ppt_io)
@@ -166,7 +186,7 @@ if generate_btn:
             label="📥 Download PPT",
             data=ppt_io,
             file_name=f"{campaign_input}_Report.pptx",
-            mime="application/vnd.openxmlformats-officedocument.presentationml.presentation"
+            mime="application/vnd.openxmlformats-officedocument.presentationml.presentation",
         )
 
     except Exception as e:
