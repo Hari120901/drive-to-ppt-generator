@@ -61,7 +61,6 @@ campaign_input = st.text_input("📌 Campaign Name")
 drive_link = st.text_input("🔗 Google Drive Folder Link (containing subfolders)")
 generate_btn = st.button("🚀 Generate Presentation")
 
-
 if generate_btn:
     if not campaign_input or not drive_link:
         st.warning("Please fill in all fields")
@@ -121,23 +120,31 @@ if generate_btn:
                 # Image Layout
                 slide_images = images[i:i + 3]
 
-                column_width = Inches(3.0)
-                start_left = Inches(0.4)
-                gap = Inches(0.4)
-                base_top = Inches(2.2)
+                # Slide margins
+                left_margin = Inches(0.4)
+                right_margin = Inches(0.4)
+                available_width = prs.slide_width - left_margin - right_margin
+                num_images = len(slide_images)
+                gap = Inches(0.2)
+                
+                # Calculate width per image to fit slide
+                image_width = (available_width - gap * (num_images - 1)) / num_images
+                top_pos = Inches(2.2)
 
                 for idx, img in enumerate(slide_images):
                     img_stream = download_image(service, img["id"])
-                    left = start_left + (idx * (column_width + gap))
+
+                    # Compute left for this image
+                    left = left_margin + idx * (image_width + gap)
 
                     picture = slide.shapes.add_picture(
                         img_stream,
                         left,
-                        base_top,
-                        width=column_width
+                        top_pos,
+                        width=image_width
                     )
 
-                    # Rotate image 90° clockwise
+                    # Rotate 90° clockwise
                     center_x = picture.left + picture.width // 2
                     center_y = picture.top + picture.height // 2
                     picture.rotation = 90
@@ -146,7 +153,6 @@ if generate_btn:
                     picture.left = int(center_x - rotated_width // 2)
                     picture.top = int(center_y - rotated_height // 2)
 
-        # Save PPT
         ppt_io = io.BytesIO()
         prs.save(ppt_io)
         ppt_io.seek(0)
