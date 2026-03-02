@@ -121,6 +121,10 @@ if generate_btn:
                     Inches(0.5), Inches(1.1), Inches(6), Inches(0.5)
                 )
                 campaign_box.text_frame.text = f"Campaign Name: {campaign_input}"
+                p.font.size = Pt(28)
+                p.font.bold = True
+                p.font.color.rgb = RGBColor(0, 0, 0)# 🔥 Make bold
+                # 🔥 Change size here (increase/decrease)
 
                 slide_images = images[i:i+3]
 
