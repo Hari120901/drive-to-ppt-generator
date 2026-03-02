@@ -78,10 +78,12 @@ if generate_btn:
 
         TEAL = RGBColor(0, 140, 170)
 
-        # Fixed visual size AFTER rotation
+        # -------------------------
+        # Fixed Layout Settings
+        # -------------------------
         visual_width = Inches(3)
-        gap = Inches(0.4)
-        start_left = Inches(0.6)
+        gap = Inches(0.3)
+        start_left = Inches(0.5)
         intended_top = Inches(2.3)
 
         left_positions = [
@@ -90,6 +92,9 @@ if generate_btn:
             start_left + (visual_width + gap) * 2
         ]
 
+        # -------------------------
+        # Loop Through Folders
+        # -------------------------
         for folder in subfolders:
 
             images = get_images_in_folder(service, folder["id"])
@@ -100,7 +105,9 @@ if generate_btn:
 
                 slide = prs.slides.add_slide(prs.slide_layouts[6])
 
+                # -------------------------
                 # Header
+                # -------------------------
                 header = slide.shapes.add_shape(
                     1, Inches(0.2), Inches(0.2), Inches(4.5), Inches(0.7)
                 )
@@ -108,31 +115,43 @@ if generate_btn:
                 header.fill.fore_color.rgb = TEAL
                 header.line.fill.background()
 
-                tf = header.text_frame
-                tf.text = folder["name"]
-                p = tf.paragraphs[0]
-                p.font.size = Pt(18)
-                p.font.bold = True
-                p.font.color.rgb = RGBColor(255, 255, 255)
-                p.alignment = PP_ALIGN.CENTER
+                header_tf = header.text_frame
+                header_tf.clear()
 
-                # Campaign name
+                hp = header_tf.paragraphs[0]
+                hp.text = folder["name"]
+                hp.font.size = Pt(18)
+                hp.font.bold = True
+                hp.font.color.rgb = RGBColor(255, 255, 255)
+                hp.alignment = PP_ALIGN.CENTER
+
+                # -------------------------
+                # Campaign Name (Proper Styling)
+                # -------------------------
                 campaign_box = slide.shapes.add_textbox(
-                    Inches(0.5), Inches(1.1), Inches(6), Inches(0.5)
+                    Inches(0.5), Inches(1.1), Inches(8), Inches(0.8)
                 )
-                campaign_box.text_frame.text = f"Campaign Name: {campaign_input}"
-                p.font.size = Pt(28)
-                p.font.bold = True
-                p.font.color.rgb = RGBColor(0, 0, 0)# 🔥 Make bold
-                # 🔥 Change size here (increase/decrease)
 
+                campaign_tf = campaign_box.text_frame
+                campaign_tf.clear()
+
+                cp = campaign_tf.paragraphs[0]
+                cp.text = f"Campaign Name: {campaign_input}"
+                cp.font.size = Pt(28)
+                cp.font.bold = True
+                cp.font.color.rgb = RGBColor(0, 0, 0)
+                cp.alignment = PP_ALIGN.LEFT
+
+                # -------------------------
+                # Add Images (Rotate + Border)
+                # -------------------------
                 slide_images = images[i:i+3]
 
                 for idx, img in enumerate(slide_images):
 
                     img_stream = download_image(service, img["id"])
 
-                    # Add unrotated image first
+                    # Add image (temporary position)
                     picture = slide.shapes.add_picture(
                         img_stream,
                         0,
@@ -143,11 +162,11 @@ if generate_btn:
                     # Rotate 90° clockwise
                     picture.rotation = 90
 
-                    # Get unrotated dimensions
+                    # Get original dimensions
                     uw = picture.width
                     uh = picture.height
 
-                    # Calculate proper alignment
+                    # Calculate correct centered position
                     center_x = left_positions[idx] + (visual_width / 2)
                     center_y = intended_top + (uw / 2)
 
@@ -169,11 +188,11 @@ if generate_btn:
                     border.fill.background()
                     border.line.color.rgb = RGBColor(0, 0, 0)
                     border.line.width = Pt(1.5)
-
-                    # Rotate border same as image
                     border.rotation = 90
 
+        # -------------------------
         # Save PPT
+        # -------------------------
         ppt_io = io.BytesIO()
         prs.save(ppt_io)
         ppt_io.seek(0)
