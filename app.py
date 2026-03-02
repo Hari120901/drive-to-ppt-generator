@@ -137,7 +137,7 @@ if generate_btn:
 
                 cp = campaign_tf.paragraphs[0]
                 cp.text = f"Campaign Name: {campaign_input}"
-                cp.font.size = Pt(28)
+                cp.font.size = Pt(26)
                 cp.font.bold = True
                 cp.font.color.rgb = RGBColor(0, 0, 0)
                 cp.alignment = PP_ALIGN.LEFT
