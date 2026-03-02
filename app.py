@@ -207,7 +207,7 @@ if generate_btn:
         prs.save(ppt_io)
         ppt_io.seek(0)
 
-        st.success("Presentation generated successfully with 90° rotated images and aligned borders!")
+        st.success("Presentation generated successfully!")
 
         st.download_button(
             label="📥 Download PPT",
