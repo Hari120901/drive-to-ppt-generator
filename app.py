@@ -91,10 +91,9 @@ if generate_btn:
             if not images:
                 continue
 
-            # Process images in groups of 3
             for i in range(0, len(images), 3):
 
-                slide = prs.slides.add_slide(prs.slide_layouts[6])  # Blank slide
+                slide = prs.slides.add_slide(prs.slide_layouts[6])
 
                 # -------------------------
                 # Header Rectangle
@@ -127,7 +126,7 @@ if generate_btn:
                 p_adv.font.color.rgb = RGBColor(0, 0, 0)
 
                 # -------------------------
-                # Image Layout (No Distortion)
+                # Image Layout (Rotated 90° Clockwise)
                 # -------------------------
                 slide_images = images[i:i + 3]
 
@@ -141,19 +140,22 @@ if generate_btn:
                     img_stream = download_image(service, img["id"])
                     left = start_left + (idx * (max_width + gap))
 
-                    # Add image with ONLY width set
+                    # Add image (preserve aspect ratio)
                     picture = slide.shapes.add_picture(
                         img_stream,
                         left,
                         top_pos,
-                        width=max_width  # Height auto-adjusts → No distortion
+                        width=max_width
                     )
 
-                    # Add border that matches actual image size
+                    # Rotate 90 degrees clockwise
+                    picture.rotation = 90
+
+                    # Add border matching rotated image
                     border = slide.shapes.add_shape(
                         1,
-                        left,
-                        top_pos,
+                        picture.left,
+                        picture.top,
                         picture.width,
                         picture.height
                     )
@@ -168,7 +170,7 @@ if generate_btn:
         prs.save(ppt_io)
         ppt_io.seek(0)
 
-        st.success("Presentation generated successfully based on folder structure!")
+        st.success("Presentation generated successfully with 90° rotated images!")
 
         st.download_button(
             label="📥 Download PPT",
