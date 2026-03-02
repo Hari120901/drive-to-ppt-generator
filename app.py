@@ -15,11 +15,15 @@ st.title("📊 Poster Frames POP PPT Generator")
 # Google Drive Authentication
 # -------------------------
 def authenticate_drive():
-    credentials = service_account.Credentials.from_service_account_info(
-        st.secrets["gdrive"],
-        scopes=["https://www.googleapis.com/auth/drive.readonly"],
-    )
-    return build("drive", "v3", credentials=credentials)
+    try:
+        credentials = service_account.Credentials.from_service_account_info(
+            st.secrets["gdrive"],
+            scopes=["https://www.googleapis.com/auth/drive.readonly"],
+        )
+        return build("drive", "v3", credentials=credentials)
+    except KeyError:
+        st.error("Error: 'gdrive' secret not found. Make sure you have configured your secrets in Streamlit.")
+        st.stop()
 
 
 def extract_folder_id(link):
@@ -77,6 +81,7 @@ if generate_btn:
             st.stop()
 
         prs = Presentation()
+        # Slide dimensions
         prs.slide_width = Inches(10)
         prs.slide_height = Inches(7.5)
 
@@ -130,38 +135,70 @@ if generate_btn:
                 # -------------------------
                 slide_images = images[i:i + 3]
 
-                max_width = Inches(3.0)
-                top_pos = Inches(2.2)
+                # Adjust visual width to fit 3 images.
+                # Since they rotate, they take up their *height* as width on the slide.
+                max_visual_width = Inches(3.0)
+                # The intended top position for the visual top edge of the rotated image.
+                intended_top = Inches(2.2)
                 start_left = Inches(0.3)
                 gap = Inches(0.3)
 
                 for idx, img in enumerate(slide_images):
 
                     img_stream = download_image(service, img["id"])
-                    left = start_left + (idx * (max_width + gap))
+                    
+                    # Target center horizontal position
+                    center_x = start_left + (idx * (max_visual_width + gap)) + (max_visual_width / 2)
 
-                    # Add image (preserve aspect ratio)
+                    # Add image (initially unrotated). Width becomes the visual height.
+                    # We don't specify height here to preserve aspect ratio.
                     picture = slide.shapes.add_picture(
                         img_stream,
-                        left,
-                        top_pos,
-                        width=max_width
+                        0, # Temporary Left
+                        0, # Temporary Top
+                        width=max_visual_width
                     )
 
-                    # Rotate 90 degrees clockwise
+                    # --- Correcting alignment for 90-degree rotation ---
+                    
+                    # 1. Rotate 90 degrees clockwise
                     picture.rotation = 90
 
-                    # Add border matching rotated image
+                    # 2. Get unrotated dimensions (these are what picture.width/height report even after rotation)
+                    uw = picture.width # Unrotated Width (becomes visual height)
+                    uh = picture.height # Unrotated Height (becomes visual width)
+
+                    # 3. Calculate necessary Left/Top so visual position is correct
+                    # Center Y is intended_top + half of visual height
+                    center_y = intended_top + (uw / 2)
+
+                    # New Unrotated Left = Center X - (Unrotated Width / 2)
+                    new_left = center_x - (uw / 2)
+                    # New Unrotated Top = Center Y - (Unrotated Height / 2)
+                    new_top = center_y - (uh / 2)
+
+                    picture.left = int(new_left)
+                    picture.top = int(new_top)
+
+
+                    # --- Add matching border ---
+                    # The border must be added at unrotated coordinates, then rotated.
+                    
                     border = slide.shapes.add_shape(
-                        1,
+                        1, # Shape type: Rectangle
                         picture.left,
                         picture.top,
                         picture.width,
                         picture.height
                     )
-                    border.fill.background()
+                    
+                    # Configure border appearance
+                    border.fill.background() # No fill
                     border.line.color.rgb = RGBColor(0, 0, 0)
                     border.line.width = Pt(1.5)
+
+                    # Important: Rotate border to match picture
+                    border.rotation = 90
 
         # -------------------------
         # Save PPT
@@ -170,7 +207,7 @@ if generate_btn:
         prs.save(ppt_io)
         ppt_io.seek(0)
 
-        st.success("Presentation generated successfully with 90° rotated images!")
+        st.success("Presentation generated successfully with 90° rotated images and aligned borders!")
 
         st.download_button(
             label="📥 Download PPT",
