@@ -85,19 +85,15 @@ if generate_btn:
         for folder in subfolders:
             folder_name = folder["name"]
             folder_id = folder["id"]
-
             images = get_images_in_folder(service, folder_id)
+
             if not images:
                 continue
 
-            # Split into groups of 3 images per slide
             for i in range(0, len(images), 3):
-
                 slide = prs.slides.add_slide(prs.slide_layouts[6])
 
-                # -------------------------
                 # Header
-                # -------------------------
                 header_rect = slide.shapes.add_shape(
                     1, Inches(0.2), Inches(0.2), Inches(4.5), Inches(0.7)
                 )
@@ -113,9 +109,7 @@ if generate_btn:
                 p.font.color.rgb = RGBColor(255, 255, 255)
                 p.alignment = PP_ALIGN.CENTER
 
-                # -------------------------
-                # Campaign Name
-                # -------------------------
+                # Campaign name
                 adv_box = slide.shapes.add_textbox(
                     Inches(0.5), Inches(1.1), Inches(6), Inches(0.5)
                 )
@@ -124,33 +118,39 @@ if generate_btn:
                 adv_para.font.bold = True
                 adv_para.font.size = Pt(22)
 
-                # -------------------------
-                # Image Section
-                # -------------------------
+                # Image Layout
                 slide_images = images[i:i + 3]
 
-                max_width = Inches(3.0)
-                top_pos = Inches(2.2)
+                column_width = Inches(3.0)
                 start_left = Inches(0.4)
-                gap = Inches(0.3)
+                gap = Inches(0.4)
+                base_top = Inches(2.2)
 
                 for idx, img in enumerate(slide_images):
 
                     img_stream = download_image(service, img["id"])
-                    left = start_left + (idx * (max_width + gap))
+                    left = start_left + (idx * (column_width + gap))
 
-                    # Insert image (keep aspect ratio)
+                    # Insert image
                     picture = slide.shapes.add_picture(
                         img_stream,
                         left,
-                        top_pos,
-                        width=max_width
+                        base_top,
+                        width=column_width
                     )
+
+                    # Store center BEFORE rotation
+                    center_x = picture.left + picture.width / 2
+                    center_y = picture.top + picture.height / 2
 
                     # Rotate 90° clockwise
                     picture.rotation = 90
 
-                    # Draw border using ACTUAL rotated bounding box
+                    # Re-center after rotation
+                    picture.left = center_x - picture.width / 2
+                    picture.top = center_y - picture.height / 2
+
+                    # Draw border aligned to rotated image
                     border = slide.shapes.add_shape(
                         1,
                         picture.left,
@@ -158,18 +158,17 @@ if generate_btn:
                         picture.width,
                         picture.height
                     )
+
                     border.fill.background()
                     border.line.color.rgb = RGBColor(0, 0, 0)
                     border.line.width = Pt(1.5)
 
-        # -------------------------
-        # Save PPT
-        # -------------------------
+        # Save presentation
         ppt_io = io.BytesIO()
         prs.save(ppt_io)
         ppt_io.seek(0)
 
-        st.success("Presentation generated successfully with correctly aligned rotated images!")
+        st.success("Presentation generated successfully with perfectly rotated alignment!")
 
         st.download_button(
             label="📥 Download PPT",
