@@ -131,7 +131,6 @@ if generate_btn:
                     img_stream = download_image(service, img["id"])
                     left = start_left + (idx * (column_width + gap))
 
-                    # Insert image
                     picture = slide.shapes.add_picture(
                         img_stream,
                         left,
@@ -140,17 +139,17 @@ if generate_btn:
                     )
 
                     # Store center BEFORE rotation
-                    center_x = picture.left + picture.width / 2
-                    center_y = picture.top + picture.height / 2
+                    center_x = picture.left + picture.width // 2
+                    center_y = picture.top + picture.height // 2
 
                     # Rotate 90° clockwise
                     picture.rotation = 90
 
-                    # Re-center after rotation
-                    picture.left = center_x - picture.width / 2
-                    picture.top = center_y - picture.height / 2
+                    # Recenter (convert to int to avoid float error)
+                    picture.left = int(center_x - picture.width // 2)
+                    picture.top = int(center_y - picture.height // 2)
 
-                    # Draw border aligned to rotated image
+                    # Border aligned perfectly
                     border = slide.shapes.add_shape(
                         1,
                         picture.left,
@@ -158,17 +157,15 @@ if generate_btn:
                         picture.width,
                         picture.height
                     )
-
                     border.fill.background()
                     border.line.color.rgb = RGBColor(0, 0, 0)
                     border.line.width = Pt(1.5)
 
-        # Save presentation
         ppt_io = io.BytesIO()
         prs.save(ppt_io)
         ppt_io.seek(0)
 
-        st.success("Presentation generated successfully with perfectly rotated alignment!")
+        st.success("Presentation generated successfully!")
 
         st.download_button(
             label="📥 Download PPT",
