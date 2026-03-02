@@ -127,7 +127,6 @@ if generate_btn:
                 base_top = Inches(2.2)
 
                 for idx, img in enumerate(slide_images):
-
                     img_stream = download_image(service, img["id"])
                     left = start_left + (idx * (column_width + gap))
 
@@ -138,28 +137,16 @@ if generate_btn:
                         width=column_width
                     )
 
+                    # Rotate image 90° clockwise
                     center_x = picture.left + picture.width // 2
                     center_y = picture.top + picture.height // 2
-
                     picture.rotation = 90
-
                     rotated_width = picture.height
                     rotated_height = picture.width
-
                     picture.left = int(center_x - rotated_width // 2)
                     picture.top = int(center_y - rotated_height // 2)
 
-                    border = slide.shapes.add_shape(
-                        1,
-                        picture.left,
-                        picture.top,
-                        rotated_width,
-                        rotated_height
-                    )
-                    border.fill.background()
-                    border.line.color.rgb = RGBColor(0, 0, 0)
-                    border.line.width = Pt(1.5)
-
+        # Save PPT
         ppt_io = io.BytesIO()
         prs.save(ppt_io)
         ppt_io.seek(0)
