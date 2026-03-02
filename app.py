@@ -126,7 +126,7 @@ if generate_btn:
                 p_adv.font.color.rgb = RGBColor(0, 0, 0)
 
                 # -------------------------
-                # Image Layout (Rotated 90° Clockwise)
+                # Image Layout (Rotated 90° Clockwise + Correct Border)
                 # -------------------------
                 slide_images = images[i:i + 3]
 
@@ -148,17 +148,31 @@ if generate_btn:
                         width=max_width
                     )
 
-                    # Rotate 90 degrees clockwise
+                    # Save original dimensions
+                    original_width = picture.width
+                    original_height = picture.height
+
+                    # Rotate image 90° clockwise
                     picture.rotation = 90
 
-                    # Add border matching rotated image
+                    # Swap width & height for rotated bounding box
+                    rotated_width = original_height
+                    rotated_height = original_width
+
+                    # Adjust image position after rotation
+                    picture.left = left
+                    picture.top = top_pos
+
+                    # Add matching rotated border
                     border = slide.shapes.add_shape(
                         1,
                         picture.left,
                         picture.top,
-                        picture.width,
-                        picture.height
+                        rotated_width,
+                        rotated_height
                     )
+
+                    border.rotation = 90
                     border.fill.background()
                     border.line.color.rgb = RGBColor(0, 0, 0)
                     border.line.width = Pt(1.5)
@@ -170,7 +184,7 @@ if generate_btn:
         prs.save(ppt_io)
         ppt_io.seek(0)
 
-        st.success("Presentation generated successfully with 90° rotated images!")
+        st.success("Presentation generated successfully with perfectly aligned rotated images!")
 
         st.download_button(
             label="📥 Download PPT",
