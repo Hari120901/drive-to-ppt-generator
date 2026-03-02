@@ -79,7 +79,7 @@ if generate_btn:
         TEAL = RGBColor(0, 140, 170)
 
         # Fixed visual size AFTER rotation
-        visual_width = Inches(2.7)
+        visual_width = Inches(3)
         gap = Inches(0.4)
         start_left = Inches(0.6)
         intended_top = Inches(2.3)
