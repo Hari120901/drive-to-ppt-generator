@@ -128,39 +128,37 @@ if generate_btn:
 
                 for idx, img in enumerate(slide_images):
 
-                    img_stream = download_image(service, img["id"])
-                    left = start_left + (idx * (column_width + gap))
+    img_stream = download_image(service, img["id"])
+    left = start_left + (idx * (column_width + gap))
 
-                    picture = slide.shapes.add_picture(
-                        img_stream,
-                        left,
-                        base_top,
-                        width=column_width
-                    )
+    picture = slide.shapes.add_picture(
+        img_stream,
+        left,
+        base_top,
+        width=column_width
+    )
 
-                    # Store center BEFORE rotation
-                    center_x = picture.left + picture.width // 2
-                    center_y = picture.top + picture.height // 2
+    center_x = picture.left + picture.width // 2
+    center_y = picture.top + picture.height // 2
 
-                    # Rotate 90° clockwise
-                    picture.rotation = 90
+    picture.rotation = 90
 
-                    # Recenter (convert to int to avoid float error)
-                    picture.left = int(center_x - picture.width // 2)
-                    picture.top = int(center_y - picture.height // 2)
+    rotated_width = picture.height
+    rotated_height = picture.width
 
-                    # Border aligned perfectly
-                    border = slide.shapes.add_shape(
-                        1,
-                        picture.left,
-                        picture.top,
-                        picture.width,
-                        picture.height
-                    )
-                    border.fill.background()
-                    border.line.color.rgb = RGBColor(0, 0, 0)
-                    border.line.width = Pt(1.5)
+    picture.left = int(center_x - rotated_width // 2)
+    picture.top = int(center_y - rotated_height // 2)
 
+    border = slide.shapes.add_shape(
+        1,
+        picture.left,
+        picture.top,
+        rotated_width,
+        rotated_height
+    )
+    border.fill.background()
+    border.line.color.rgb = RGBColor(0, 0, 0)
+    border.line.width = Pt(1.5)
         ppt_io = io.BytesIO()
         prs.save(ppt_io)
         ppt_io.seek(0)
