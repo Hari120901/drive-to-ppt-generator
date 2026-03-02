@@ -81,7 +81,7 @@ if generate_btn:
         # -------------------------
         # Fixed Layout Settings
         # -------------------------
-        visual_width = Inches(4)
+        visual_width = Inches(3)
         gap = Inches(0.2)
         start_left = Inches(0.3)
         intended_top = Inches(2.3)
