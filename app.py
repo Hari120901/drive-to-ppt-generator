@@ -85,19 +85,15 @@ if generate_btn:
         for folder in subfolders:
             folder_name = folder["name"]
             folder_id = folder["id"]
-
             images = get_images_in_folder(service, folder_id)
 
             if not images:
                 continue
 
             for i in range(0, len(images), 3):
-
                 slide = prs.slides.add_slide(prs.slide_layouts[6])
 
-                # -------------------------
-                # Header Rectangle
-                # -------------------------
+                # Header
                 header_rect = slide.shapes.add_shape(
                     1, Inches(0.2), Inches(0.2), Inches(4.5), Inches(0.7)
                 )
@@ -105,84 +101,71 @@ if generate_btn:
                 header_rect.fill.fore_color.rgb = TEAL_COLOR
                 header_rect.line.fill.background()
 
-                loc_text = header_rect.text_frame
-                loc_text.text = folder_name
-                p_loc = loc_text.paragraphs[0]
-                p_loc.font.bold = True
-                p_loc.font.size = Pt(18)
-                p_loc.font.color.rgb = RGBColor(255, 255, 255)
-                p_loc.alignment = PP_ALIGN.CENTER
+                header_text = header_rect.text_frame
+                header_text.text = folder_name
+                p = header_text.paragraphs[0]
+                p.font.bold = True
+                p.font.size = Pt(18)
+                p.font.color.rgb = RGBColor(255, 255, 255)
+                p.alignment = PP_ALIGN.CENTER
 
-                # -------------------------
-                # Campaign Name
-                # -------------------------
+                # Campaign name
                 adv_box = slide.shapes.add_textbox(
                     Inches(0.5), Inches(1.1), Inches(6), Inches(0.5)
                 )
-                p_adv = adv_box.text_frame.paragraphs[0]
-                p_adv.text = f"Campaign Name: {campaign_input}"
-                p_adv.font.bold = True
-                p_adv.font.size = Pt(22)
-                p_adv.font.color.rgb = RGBColor(0, 0, 0)
+                adv_para = adv_box.text_frame.paragraphs[0]
+                adv_para.text = f"Campaign Name: {campaign_input}"
+                adv_para.font.bold = True
+                adv_para.font.size = Pt(22)
 
-                # -------------------------
-                # Image Layout (Rotated 90° Clockwise + Correct Border)
-                # -------------------------
+                # Image Layout
                 slide_images = images[i:i + 3]
 
-                max_width = Inches(3.0)
-                top_pos = Inches(2.2)
-                start_left = Inches(0.3)
-                gap = Inches(0.3)
+                column_width = Inches(3.0)
+                start_left = Inches(0.4)
+                gap = Inches(0.4)
+                base_top = Inches(2.2)
 
                 for idx, img in enumerate(slide_images):
 
                     img_stream = download_image(service, img["id"])
-                    left = start_left + (idx * (max_width + gap))
+                    left = start_left + (idx * (column_width + gap))
 
-                    # Add image (preserve aspect ratio)
                     picture = slide.shapes.add_picture(
                         img_stream,
                         left,
-                        top_pos,
-                        width=max_width
+                        base_top,
+                        width=column_width
                     )
 
-                    # Save original center coordinates
+                    # Store center BEFORE rotation
                     center_x = picture.left + picture.width // 2
                     center_y = picture.top + picture.height // 2
 
-                    # Rotate image 90 degrees clockwise
+                    # Rotate 90° clockwise
                     picture.rotation = 90
 
-                    # After rotation, swapped bounding box size
-                    rotated_width = picture.height  # original height becomes width
-                    rotated_height = picture.width  # original width becomes height
+                    # Recenter (convert to int to avoid float error)
+                    picture.left = int(center_x - picture.width // 2)
+                    picture.top = int(center_y - picture.height // 2)
 
-                    # Adjust position so rotated image is centered at original center
-                    picture.left = int(center_x - rotated_width // 2)
-                    picture.top = int(center_y - rotated_height // 2)
-
-                    # Add border aligned with rotated image bounding box (no rotation)
+                    # Border aligned perfectly
                     border = slide.shapes.add_shape(
-                        1,  # Rectangle shape
+                        1,
                         picture.left,
                         picture.top,
-                        rotated_width,
-                        rotated_height,
+                        picture.width,
+                        picture.height
                     )
                     border.fill.background()
                     border.line.color.rgb = RGBColor(0, 0, 0)
                     border.line.width = Pt(1.5)
 
-        # -------------------------
-        # Save PPT
-        # -------------------------
         ppt_io = io.BytesIO()
         prs.save(ppt_io)
         ppt_io.seek(0)
 
-        st.success("Presentation generated successfully with perfectly aligned rotated images!")
+        st.success("Presentation generated successfully!")
 
         st.download_button(
             label="📥 Download PPT",
