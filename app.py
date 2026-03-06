@@ -63,6 +63,7 @@ generate_btn = st.button("🚀 Generate Presentation")
 
 
 if generate_btn:
+
     if not campaign_input or not drive_link:
         st.warning("Please fill all fields")
         st.stop()
@@ -79,18 +80,17 @@ if generate_btn:
         TEAL = RGBColor(0, 140, 170)
 
         # -------------------------
-        # Fixed Layout Settings
+        # Layout for 2 Images
         # -------------------------
-        visual_width = Inches(3)
-        gap = Inches(0.2)
-        start_left = Inches(0.3)
-        intended_top = Inches(2.3)
+        image_width = Inches(4)
+        gap = Inches(0.4)
 
         left_positions = [
-            start_left,
-            start_left + visual_width + gap,
-            start_left + (visual_width + gap) * 2
+            Inches(0.6),
+            Inches(5.0)
         ]
+
+        top_position = Inches(2.2)
 
         # -------------------------
         # Loop Through Folders
@@ -101,7 +101,7 @@ if generate_btn:
             if not images:
                 continue
 
-            for i in range(0, len(images), 3):
+            for i in range(0, len(images), 2):
 
                 slide = prs.slides.add_slide(prs.slide_layouts[6])
 
@@ -111,6 +111,7 @@ if generate_btn:
                 header = slide.shapes.add_shape(
                     1, Inches(0.2), Inches(0.2), Inches(4.5), Inches(0.7)
                 )
+
                 header.fill.solid()
                 header.fill.fore_color.rgb = TEAL
                 header.line.fill.background()
@@ -126,7 +127,7 @@ if generate_btn:
                 hp.alignment = PP_ALIGN.CENTER
 
                 # -------------------------
-                # Campaign Name (Proper Styling)
+                # Campaign Name
                 # -------------------------
                 campaign_box = slide.shapes.add_textbox(
                     Inches(0.5), Inches(1.1), Inches(8), Inches(0.8)
@@ -143,40 +144,22 @@ if generate_btn:
                 cp.alignment = PP_ALIGN.LEFT
 
                 # -------------------------
-                # Add Images (Rotate + Border)
+                # Add Images (2 per slide)
                 # -------------------------
-                slide_images = images[i:i+3]
+                slide_images = images[i:i+2]
 
                 for idx, img in enumerate(slide_images):
 
                     img_stream = download_image(service, img["id"])
 
-                    # Add image (temporary position)
                     picture = slide.shapes.add_picture(
                         img_stream,
-                        0,
-                        0,
-                        width=visual_width
+                        left_positions[idx],
+                        top_position,
+                        width=image_width
                     )
 
-                    # Rotate 90° clockwise
-                    picture.rotation = 90
-
-                    # Get original dimensions
-                    uw = picture.width
-                    uh = picture.height
-
-                    # Calculate correct centered position
-                    center_x = left_positions[idx] + (visual_width / 2)
-                    center_y = intended_top + (uw / 2)
-
-                    new_left = center_x - (uw / 2)
-                    new_top = center_y - (uh / 2)
-
-                    picture.left = int(new_left)
-                    picture.top = int(new_top)
-
-                    # Add matching border
+                    # Border
                     border = slide.shapes.add_shape(
                         1,
                         picture.left,
@@ -188,7 +171,6 @@ if generate_btn:
                     border.fill.background()
                     border.line.color.rgb = RGBColor(0, 0, 0)
                     border.line.width = Pt(1.5)
-                    border.rotation = 90
 
         # -------------------------
         # Save PPT
