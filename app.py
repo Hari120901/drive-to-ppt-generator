@@ -89,7 +89,7 @@ if generate_btn:
         # Image Layout
         # -------------------------
         image_width = Inches(4)
-        gap = Inches(2)
+        gap = Inches(2.2)
         top_position = Inches(1.8)
 
         left_positions = [
@@ -132,7 +132,7 @@ if generate_btn:
                 tf = label_box.text_frame
                 p = tf.paragraphs[0]
                 p.text = "C A M P A I G N  N A M E:"
-                p.font.size = Pt(26)
+                p.font.size = Pt(24)
                 p.font.name = "Montserrat"
                 p.font.bold = False
                 p.font.color.rgb = FRENCH_NAVY
@@ -150,7 +150,7 @@ if generate_btn:
                 tf = name_box.text_frame
                 p = tf.paragraphs[0]
                 p.text = campaign_input
-                p.font.size = Pt(34)
+                p.font.size = Pt(32)
                 p.font.name = "Montserrat"
                 p.font.bold = True
                 p.font.color.rgb = FRENCH_NAVY
