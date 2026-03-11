@@ -101,7 +101,7 @@ if generate_btn:
 
             tf = label_box.text_frame
             p = tf.paragraphs[0]
-            p.text = "CAMPAIGN NAME:"
+            p.text = "C A M P A I G N  N A M E:"
             p.font.size = Pt(20)
             p.font.name = "Montserrat"
             p.font.bold = False
@@ -117,7 +117,7 @@ if generate_btn:
             tf = name_box.text_frame
             p = tf.paragraphs[0]
             p.text = campaign_input
-            p.font.size = Pt(42)
+            p.font.size = Pt(38)
             p.font.name = "Montserrat"
             p.font.bold = True
             p.font.color.rgb = RGBColor(0, 0, 0)
