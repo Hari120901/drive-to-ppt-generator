@@ -67,7 +67,7 @@ if generate_btn:
     subfolders = get_subfolders(service, folder_id)
 
     prs = Presentation()
-    prs.slide_width = Inches(10)
+    prs.slide_width = Inches(13.33)
     prs.slide_height = Inches(7.5)
 
     TEAL = RGBColor(0, 150, 160)
