@@ -9,7 +9,7 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
 
 st.set_page_config(page_title="Poster Frames PPT", layout="wide")
-st.title("📊 Poster Frames POP PPT Generator")
+st.title("Poster Frames POP PPT Generator")
 
 # -------------------------
 # Google Drive Authentication
@@ -23,9 +23,6 @@ def authenticate_drive():
 
 
 def extract_folder_id(link):
-    if "folders/" not in link:
-        st.error("Please provide valid Google Drive folder link")
-        st.stop()
     return link.split("folders/")[1].split("?")[0]
 
 
@@ -55,138 +52,133 @@ def download_image(service, file_id):
 
 
 # -------------------------
-# User Inputs
+# Inputs
 # -------------------------
-campaign_input = st.text_input("📌 Campaign Name")
-drive_link = st.text_input("🔗 Google Drive Folder Link")
-generate_btn = st.button("🚀 Generate Presentation")
+campaign_input = st.text_input("Campaign Name")
+drive_link = st.text_input("Google Drive Folder Link")
+
+generate_btn = st.button("Generate PPT")
 
 
 if generate_btn:
 
-    if not campaign_input or not drive_link:
-        st.warning("Please fill all fields")
-        st.stop()
+    service = authenticate_drive()
+    folder_id = extract_folder_id(drive_link)
+    subfolders = get_subfolders(service, folder_id)
 
-    try:
-        service = authenticate_drive()
-        main_folder_id = extract_folder_id(drive_link)
-        subfolders = get_subfolders(service, main_folder_id)
+    prs = Presentation()
+    prs.slide_width = Inches(13.33)
+    prs.slide_height = Inches(7.5)
 
-        prs = Presentation()
-        prs.slide_width = Inches(10)
-        prs.slide_height = Inches(7.5)
+    TEAL = RGBColor(0, 150, 160)
+    GREY = RGBColor(242, 242, 242)
+    DARK_GREY = RGBColor(90, 90, 90)
 
-        TEAL = RGBColor(0, 140, 170)
+    for folder in subfolders:
 
-        # -------------------------
-        # Layout for 2 Images
-        # -------------------------
-        image_width = Inches(3)
-        gap = Inches(0.4)
+        images = get_images_in_folder(service, folder["id"])
+        if not images:
+            continue
 
-        left_positions = [
-            Inches(0.6),
-            Inches(5.0)
-        ]
+        for i in range(0, len(images), 2):
 
-        top_position = Inches(2.2)
+            slide = prs.slides.add_slide(prs.slide_layouts[6])
 
-        # -------------------------
-        # Loop Through Folders
-        # -------------------------
-        for folder in subfolders:
+            # -------------------------
+            # Background
+            # -------------------------
+            bg = slide.background
+            fill = bg.fill
+            fill.solid()
+            fill.fore_color.rgb = GREY
 
-            images = get_images_in_folder(service, folder["id"])
-            if not images:
-                continue
+            # -------------------------
+            # CAMPAIGN LABEL
+            # -------------------------
+            label_box = slide.shapes.add_textbox(
+                Inches(0.8), Inches(0.6), Inches(5), Inches(0.6)
+            )
 
-            for i in range(0, len(images), 2):
+            tf = label_box.text_frame
+            p = tf.paragraphs[0]
+            p.text = "CAMPAIGN NAME:"
+            p.font.size = Pt(20)
+            p.font.name = "Montserrat"
+            p.font.bold = False
+            p.font.color.rgb = DARK_GREY
 
-                slide = prs.slides.add_slide(prs.slide_layouts[6])
+            # -------------------------
+            # Campaign Title
+            # -------------------------
+            name_box = slide.shapes.add_textbox(
+                Inches(0.8), Inches(1.0), Inches(7), Inches(1)
+            )
 
-                # -------------------------
-                # Header
-                # -------------------------
-                header = slide.shapes.add_shape(
-                    1, Inches(0.2), Inches(0.2), Inches(4.5), Inches(0.7)
+            tf = name_box.text_frame
+            p = tf.paragraphs[0]
+            p.text = campaign_input
+            p.font.size = Pt(42)
+            p.font.name = "Montserrat"
+            p.font.bold = True
+            p.font.color.rgb = RGBColor(0, 0, 0)
+
+            # -------------------------
+            # Store / Location Name
+            # -------------------------
+            store_box = slide.shapes.add_textbox(
+                Inches(8.5), Inches(0.8), Inches(4), Inches(1)
+            )
+
+            tf = store_box.text_frame
+            p = tf.paragraphs[0]
+            p.text = folder["name"].upper()
+            p.font.size = Pt(38)
+            p.font.name = "Montserrat"
+            p.font.bold = True
+            p.font.color.rgb = TEAL
+            p.alignment = PP_ALIGN.RIGHT
+
+            # -------------------------
+            # Images
+            # -------------------------
+            slide_images = images[i:i+2]
+
+            left_positions = [Inches(2.3), Inches(7.2)]
+            top_position = Inches(2.2)
+
+            for idx, img in enumerate(slide_images):
+
+                img_stream = download_image(service, img["id"])
+
+                picture = slide.shapes.add_picture(
+                    img_stream,
+                    left_positions[idx],
+                    top_position,
+                    width=Inches(3.8)
                 )
 
-                header.fill.solid()
-                header.fill.fore_color.rgb = TEAL
-                header.line.fill.background()
-
-                header_tf = header.text_frame
-                header_tf.clear()
-
-                hp = header_tf.paragraphs[0]
-                hp.text = folder["name"]
-                hp.font.size = Pt(18)
-                hp.font.bold = True
-                hp.font.color.rgb = RGBColor(255, 255, 255)
-                hp.alignment = PP_ALIGN.CENTER
-
-                # -------------------------
-                # Campaign Name
-                # -------------------------
-                campaign_box = slide.shapes.add_textbox(
-                    Inches(0.5), Inches(1.1), Inches(8), Inches(0.8)
+                # Frame Border
+                border = slide.shapes.add_shape(
+                    1,
+                    picture.left,
+                    picture.top,
+                    picture.width,
+                    picture.height
                 )
 
-                campaign_tf = campaign_box.text_frame
-                campaign_tf.clear()
+                border.fill.background()
+                border.line.color.rgb = TEAL
+                border.line.width = Pt(3)
 
-                cp = campaign_tf.paragraphs[0]
-                cp.text = f"Campaign Name: {campaign_input}"
-                cp.font.size = Pt(26)
-                cp.font.bold = True
-                cp.font.color.rgb = RGBColor(0, 0, 0)
-                cp.alignment = PP_ALIGN.LEFT
+    ppt_io = io.BytesIO()
+    prs.save(ppt_io)
+    ppt_io.seek(0)
 
-                # -------------------------
-                # Add Images (2 per slide)
-                # -------------------------
-                slide_images = images[i:i+2]
+    st.success("Presentation Generated!")
 
-                for idx, img in enumerate(slide_images):
-
-                    img_stream = download_image(service, img["id"])
-
-                    picture = slide.shapes.add_picture(
-                        img_stream,
-                        left_positions[idx],
-                        top_position,
-                        width=image_width
-                    )
-
-                    # Border
-                    border = slide.shapes.add_shape(
-                        1,
-                        picture.left,
-                        picture.top,
-                        picture.width,
-                        picture.height
-                    )
-
-                    border.fill.background()
-                    border.line.color.rgb = RGBColor(0, 0, 0)
-                    border.line.width = Pt(1.5)
-
-        # -------------------------
-        # Save PPT
-        # -------------------------
-        ppt_io = io.BytesIO()
-        prs.save(ppt_io)
-        ppt_io.seek(0)
-
-        st.success("Presentation generated successfully!")
-
-        st.download_button(
-            label="📥 Download PPT",
-            data=ppt_io,
-            file_name=f"{campaign_input}_Report.pptx",
-            mime="application/vnd.openxmlformats-officedocument.presentationml.presentation",
-        )
-
-    except Exception as e:
-        st.error(f"Error: {e}")
+    st.download_button(
+        "Download PPT",
+        data=ppt_io,
+        file_name=f"{campaign_input}_report.pptx",
+        mime="application/vnd.openxmlformats-officedocument.presentationml.presentation"
+    )
