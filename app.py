@@ -78,12 +78,16 @@ if generate_btn:
         prs.slide_width = Inches(13.33)
         prs.slide_height = Inches(7.5)
 
+        # -------------------------
         # Colors
+        # -------------------------
         TEAL = RGBColor(0, 150, 160)
         GREY = RGBColor(242, 242, 242)
         FRENCH_NAVY = RGBColor(11, 35, 65)
 
-        # Image layout settings
+        # -------------------------
+        # Image Layout Settings
+        # -------------------------
         image_width = Inches(3)
         gap = Inches(0.4)
         top_position = Inches(2.3)
@@ -98,7 +102,7 @@ if generate_btn:
         ]
 
         # -------------------------
-        # Loop Through Subfolders
+        # Loop Through Folders
         # -------------------------
         for folder in subfolders:
 
@@ -112,7 +116,7 @@ if generate_btn:
                 slide = prs.slides.add_slide(prs.slide_layouts[6])
 
                 # -------------------------
-                # Background Color
+                # Background
                 # -------------------------
                 bg = slide.background
                 fill = bg.fill
@@ -135,7 +139,7 @@ if generate_btn:
                 p.font.size = Pt(24)
                 p.font.name = "Montserrat"
                 p.font.bold = False
-                p.font.color.rgb = FRENCY_NAVY
+                p.font.color.rgb = FRENCH_NAVY
 
                 # -------------------------
                 # Campaign Name
@@ -153,10 +157,10 @@ if generate_btn:
                 p.font.size = Pt(42)
                 p.font.name = "Montserrat"
                 p.font.bold = True
-                p.font.color.rgb = RGBColor(3, 0, 46)
+                p.font.color.rgb = FRENCH_NAVY
 
                 # -------------------------
-                # Folder / Location Name
+                # Store / Folder Name
                 # -------------------------
                 store_box = slide.shapes.add_textbox(
                     Inches(8.5),
@@ -175,7 +179,7 @@ if generate_btn:
                 p.alignment = PP_ALIGN.RIGHT
 
                 # -------------------------
-                # Add Images
+                # Images
                 # -------------------------
                 slide_images = images[i:i+2]
 
@@ -190,7 +194,7 @@ if generate_btn:
                         width=image_width
                     )
 
-                    # Frame Border
+                    # Border Frame
                     border = slide.shapes.add_shape(
                         1,
                         picture.left,
