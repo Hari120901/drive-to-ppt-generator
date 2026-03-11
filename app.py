@@ -172,7 +172,7 @@ if generate_btn:
                 p.font.name = "Montserrat"
                 p.font.bold = True
                 p.font.color.rgb = TEAL
-                p.alignment = PP_ALIGN.CENTER
+                p.alignment = PP_ALIGN.LEFT
 
                 # -------------------------
                 # Add Images
