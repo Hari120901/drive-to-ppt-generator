@@ -86,23 +86,19 @@ if generate_btn:
         FRENCH_NAVY = RGBColor(11, 35, 65)
 
         # -------------------------
-        # Image Layout Settings
+        # Image Layout
         # -------------------------
         image_width = Inches(3)
-        gap = Inches(0.4)
-        top_position = Inches(2.3)
-
-        slide_width = prs.slide_width
-        total_width = image_width * 2 + gap
-        start_left = (slide_width - total_width) / 2
+        gap = Inches(0.9)
+        top_position = Inches(2.2)
 
         left_positions = [
-            start_left,
-            start_left + image_width + gap
+            Inches(1.3),
+            Inches(1.3) + image_width + gap
         ]
 
         # -------------------------
-        # Loop Through Folders
+        # Loop Through Subfolders
         # -------------------------
         for folder in subfolders:
 
@@ -127,7 +123,7 @@ if generate_btn:
                 # Campaign Label
                 # -------------------------
                 label_box = slide.shapes.add_textbox(
-                    Inches(0.8),
+                    Inches(0.9),
                     Inches(0.6),
                     Inches(5),
                     Inches(0.6)
@@ -136,7 +132,7 @@ if generate_btn:
                 tf = label_box.text_frame
                 p = tf.paragraphs[0]
                 p.text = "C A M P A I G N  N A M E:"
-                p.font.size = Pt(24)
+                p.font.size = Pt(22)
                 p.font.name = "Montserrat"
                 p.font.bold = False
                 p.font.color.rgb = FRENCH_NAVY
@@ -145,7 +141,7 @@ if generate_btn:
                 # Campaign Name
                 # -------------------------
                 name_box = slide.shapes.add_textbox(
-                    Inches(0.8),
+                    Inches(0.9),
                     Inches(1.0),
                     Inches(7),
                     Inches(1)
@@ -179,7 +175,7 @@ if generate_btn:
                 p.alignment = PP_ALIGN.RIGHT
 
                 # -------------------------
-                # Images
+                # Add Images
                 # -------------------------
                 slide_images = images[i:i+2]
 
@@ -194,7 +190,7 @@ if generate_btn:
                         width=image_width
                     )
 
-                    # Border Frame
+                    # Frame Border
                     border = slide.shapes.add_shape(
                         1,
                         picture.left,
