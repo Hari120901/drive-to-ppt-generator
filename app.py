@@ -150,7 +150,7 @@ if generate_btn:
                 tf = name_box.text_frame
                 p = tf.paragraphs[0]
                 p.text = campaign_input
-                p.font.size = Pt(42)
+                p.font.size = Pt(40)
                 p.font.name = "Montserrat"
                 p.font.bold = True
                 p.font.color.rgb = FRENCH_NAVY
