@@ -89,7 +89,7 @@ if generate_btn:
         # Image Layout
         # -------------------------
         image_width = Inches(4)
-        gap = Inches(2.2)
+        gap = Inches(2.5)
         top_position = Inches(1.8)
 
         left_positions = [
@@ -172,7 +172,7 @@ if generate_btn:
                 p.font.name = "Montserrat"
                 p.font.bold = True
                 p.font.color.rgb = TEAL
-                p.alignment = PP_ALIGN.RIGHT
+                p.alignment = PP_ALIGN.CENTER
 
                 # -------------------------
                 # Add Images
