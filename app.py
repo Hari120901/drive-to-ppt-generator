@@ -67,7 +67,7 @@ if generate_btn:
     subfolders = get_subfolders(service, folder_id)
 
     prs = Presentation()
-    prs.slide_width = Inches(13.33)
+    prs.slide_width = Inches(10)
     prs.slide_height = Inches(7.5)
 
     TEAL = RGBColor(0, 150, 160)
@@ -143,7 +143,7 @@ if generate_btn:
             # -------------------------
             slide_images = images[i:i+2]
 
-            left_positions = [Inches(2.3), Inches(7.2)]
+            left_positions = [Inches(0.6), Inches(5)]
             top_position = Inches(2.2)
 
             for idx, img in enumerate(slide_images):
@@ -154,7 +154,7 @@ if generate_btn:
                     img_stream,
                     left_positions[idx],
                     top_position,
-                    width=Inches(3.8)
+                    width=Inches(3)
                 )
 
                 # Frame Border
