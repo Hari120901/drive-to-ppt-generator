@@ -81,7 +81,7 @@ if generate_btn:
         # Colors
         TEAL = RGBColor(0, 150, 160)
         GREY = RGBColor(242, 242, 242)
-        DARK_GREY = RGBColor(90, 90, 90)
+        FRENCH_NAVY = RGBColor(90, 90, 90)
 
         # Image layout settings
         image_width = Inches(3)
