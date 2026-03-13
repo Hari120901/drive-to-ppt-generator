@@ -159,7 +159,7 @@ if generate_btn:
                 # Store / Folder Name
                 # -------------------------
                 store_box = slide.shapes.add_textbox(
-                    Inches(6.5),
+                    Inches(7),
                     Inches(0.8),
                     Inches(4),
                     Inches(1)
