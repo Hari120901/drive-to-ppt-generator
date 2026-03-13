@@ -88,7 +88,7 @@ if generate_btn:
         # -------------------------
         # Image Layout
         # -------------------------
-        image_width = Inches(4)
+        image_width = Inches(3)
         gap = Inches(2.5)
         top_position = Inches(1.8)
 
@@ -168,7 +168,7 @@ if generate_btn:
                 tf = store_box.text_frame
                 p = tf.paragraphs[0]
                 p.text = folder["name"].upper()
-                p.font.size = Pt(34)
+                p.font.size = Pt(30)
                 p.font.name = "Montserrat"
                 p.font.bold = True
                 p.font.color.rgb = TEAL
