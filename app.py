@@ -89,7 +89,7 @@ if generate_btn:
         # Image Layout
         # -------------------------
         image_width = Inches(3)
-        gap = Inches(2.5)
+        gap = Inches(3)
         top_position = Inches(1.8)
 
         left_positions = [
